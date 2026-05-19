@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #0d0d0f;
+            --surface:  #16161a;
+            --surface2: #1e1e24;
+            --border:   #2a2a30;
+            --accent:   #7c6af7;
+            --accent2:  #c084fc;
+            --text:     #e8e8f0;
+            --muted:    #6b6b80;
+            --online:   #4ade80;
+            --offline:  #3a3a45;
+            --sistema:  #4ade80;
+            --error:    #f87171;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Header ── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.9rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        .usuario-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .btn-logout {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            padding: 0.35rem 0.75rem;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .btn-logout:hover { border-color: var(--accent); color: var(--text); }
+
+        /* ── Layout ── */
+        .main { display: flex; flex: 1; overflow: hidden; }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            width: 240px;
+            border-right: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-titulo {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 0.6rem;
+        }
+
+        /* itens de amigo e grupo compartilham o mesmo estilo */
+        .lista-itens {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .item-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0.6rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 0.88rem;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .item-nav:hover  { background: var(--surface2); }
+        .item-nav.ativo  { background: var(--surface2); border-color: var(--border); }
+
+        .amigo-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .amigo-dot.online  { background: var(--online); box-shadow: 0 0 6px var(--online); }
+        .amigo-dot.offline { background: var(--offline); }
+
+        .grupo-icone {
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .item-nome {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .btn-add {
+            width: 100%;
+            background: none;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+        .sem-itens {
+            font-size: 0.8rem;
+            color: var(--muted);
+            padding: 0.3rem;
+        }
+
+        /* ── Área de chat ── */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 0.6rem 1.2rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 0.85rem;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .chat-header strong { color: var(--text); }
+
+        .btn-add-membro {
+            margin-left: auto;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            padding: 0.25rem 0.6rem;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .btn-add-membro:hover { border-color: var(--accent); color: var(--accent); }
+
+        #mensagens {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            scroll-behavior: smooth;
+        }
+
+        #mensagens::-webkit-scrollbar { width: 4px; }
+        #mensagens::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .msg {
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+            max-width: 70%;
+            animation: msgIn 0.2s ease both;
+        }
+
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg.propria      { align-self: flex-end;   align-items: flex-end; }
+        .msg.outros       { align-self: flex-start;  align-items: flex-start; }
+        .msg.sistema,
+        .msg.info         { align-self: center; align-items: center; }
+
+        .msg-remetente {
+            font-size: 0.75rem;
+            color: var(--muted);
+            padding: 0 0.5rem;
+        }
+
+        .msg-bubble {
+            padding: 0.6rem 0.9rem;
+            border-radius: 14px;
+            font-size: 0.92rem;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .msg.propria .msg-bubble {
+            background: var(--accent);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg.outros .msg-bubble {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg.sistema .msg-bubble {
+            background: transparent;
+            color: var(--sistema);
+            font-size: 0.82rem;
+            border: 1px solid rgba(74,222,128,0.2);
+            border-radius: 20px;
+            padding: 0.3rem 0.9rem;
+        }
+
+        .msg.info .msg-bubble {
+            background: transparent;
+            color: var(--muted);
+            font-size: 0.82rem;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 0.3rem 0.9rem;
+        }
+
+        /* ── Input ── */
+        .input-area {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            gap: 0.7rem;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #campo-mensagem {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            padding: 0.7rem 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #campo-mensagem:focus { border-color: var(--accent); }
+        #campo-mensagem::placeholder { color: var(--muted); }
+        #campo-mensagem:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-enviar {
+            background: var(--accent);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.7rem 1.3rem;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .btn-enviar:hover  { opacity: 0.88; }
+        .btn-enviar:active { transform: scale(0.97); }
+        .btn-enviar:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ── Modais ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.visivel { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 340px;
+            transform: translateY(10px);
+            transition: transform 0.2s;
+        }
+
+        .modal-overlay.visivel .modal { transform: translateY(0); }
+
+        .modal h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            padding: 0.65rem 0.9rem;
+            margin-bottom: 0.8rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .modal input:focus { border-color: var(--accent); }
+
+        .modal-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        /* checkboxes de amigos no modal de criar grupo */
+        .amigos-check-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            max-height: 160px;
+            overflow-y: auto;
+            margin-bottom: 0.8rem;
+            padding: 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .amigo-check-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.88rem;
+            cursor: pointer;
+            padding: 0.2rem 0;
+        }
+
+        .amigo-check-item input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            margin: 0;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .modal-btns { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
+
+        .btn-confirmar {
+            flex: 1;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.88rem;
+            padding: 0.6rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-confirmar:hover { opacity: 0.85; }
+
+        .btn-cancelar {
+            flex: 1;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            padding: 0.6rem;
+            cursor: pointer;
+        }
+
+        .btn-cancelar:hover { border-color: var(--error); color: var(--error); }
+
+        .modal-erro {
+            color: var(--error);
+            font-size: 0.82rem;
+            margin-bottom: 0.6rem;
+            min-height: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">💬 chat</div>
+    <div class="usuario-info">
+        <div class="avatar" id="avatar">?</div>
+        <span id="nome-usuario">...</span>
+        <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+</header>
+
+<div class="main">
+
+    <aside class="sidebar">
+
+        <!-- Seção Amigos -->
+        <div class="sidebar-section">
+            <div class="sidebar-titulo">Amigos</div>
+            <div class="lista-itens" id="amigos-lista">
+                <span class="sem-itens">Carregando...</span>
+            </div>
+            <button class="btn-add" onclick="abrirModalAmigo()">+ Adicionar amigo</button>
+        </div>
+
+        <!-- Seção Grupos -->
+        <div class="sidebar-section">
+            <div class="sidebar-titulo">Grupos</div>
+            <div class="lista-itens" id="grupos-lista">
+                <span class="sem-itens">Carregando...</span>
+            </div>
+            <button class="btn-add" onclick="abrirModalCriarGrupo()">+ Criar grupo</button>
+        </div>
+
+    </aside>
+
+    <div class="chat-area">
+        <div class="chat-header" id="chat-header">
+            💬 <strong>Selecione um amigo ou grupo</strong>
+        </div>
+        <div id="mensagens"></div>
+        <div class="input-area">
+            <input
+                type="text"
+                id="campo-mensagem"
+                placeholder="Selecione uma conversa..."
+                autocomplete="off"
+                disabled
+                onkeydown="if(event.key==='Enter') enviar()"
+            >
+            <button class="btn-enviar" onclick="enviar()" disabled>Enviar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: adicionar amigo -->
+<div class="modal-overlay" id="modal-amigo" onclick="fecharModalSeClicarFora(event, 'modal-amigo')">
+    <div class="modal">
+        <h3>➕ Adicionar amigo</h3>
+        <input type="text" id="input-amigo" placeholder="Nome do usuário" autocomplete="off"
+               onkeydown="if(event.key==='Enter') confirmarAdicionarAmigo()">
+        <div class="modal-erro" id="erro-amigo"></div>
+        <div class="modal-btns">
+            <button class="btn-cancelar" onclick="fecharModal('modal-amigo')">Cancelar</button>
+            <button class="btn-confirmar" onclick="confirmarAdicionarAmigo()">Adicionar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: criar grupo -->
+<div class="modal-overlay" id="modal-criar-grupo" onclick="fecharModalSeClicarFora(event, 'modal-criar-grupo')">
+    <div class="modal">
+        <h3>👥 Criar grupo</h3>
+
+        <label class="modal-label">Nome do grupo</label>
+        <input type="text" id="input-nome-grupo" placeholder="Ex: Trabalho, Família..."
+               autocomplete="off">
+
+        <label class="modal-label">Adicionar amigos</label>
+        <div class="amigos-check-lista" id="amigos-check-lista">
+            <span class="sem-itens">Carregando amigos...</span>
+        </div>
+
+        <div class="modal-erro" id="erro-criar-grupo"></div>
+        <div class="modal-btns">
+            <button class="btn-cancelar" onclick="fecharModal('modal-criar-grupo')">Cancelar</button>
+            <button class="btn-confirmar" onclick="confirmarCriarGrupo()">Criar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: adicionar membro ao grupo -->
+<div class="modal-overlay" id="modal-add-membro" onclick="fecharModalSeClicarFora(event, 'modal-add-membro')">
+    <div class="modal">
+        <h3>➕ Adicionar membro</h3>
+        <input type="text" id="input-novo-membro" placeholder="Nome do usuário" autocomplete="off"
+               onkeydown="if(event.key==='Enter') confirmarAdicionarMembro()">
+        <div class="modal-erro" id="erro-add-membro"></div>
+        <div class="modal-btns">
+            <button class="btn-cancelar" onclick="fecharModal('modal-add-membro')">Cancelar</button>
+            <button class="btn-confirmar" onclick="confirmarAdicionarMembro()">Adicionar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+// ── Identidade ────────────────────────────────────────────────────────────────
+
+const MEU_NOME = "{{ nome }}";
+document.getElementById("nome-usuario").textContent = MEU_NOME;
+document.getElementById("avatar").textContent = MEU_NOME.charAt(0).toUpperCase();
+
+// ── Estado ────────────────────────────────────────────────────────────────────
+
+let modoAtivo      = null;   // "amigo" | "grupo" | null
+let amigoAtivo     = null;   // nome do amigo no chat privado
+let grupoAtivo     = null;   // { id, nome } do grupo aberto
+let pollingAtivo   = null;   // referência do setInterval atual
+let totalMsgs      = 0;      // contador de msgs já renderizadas (privado ou grupo)
+
+// ── Utilitários de UI ─────────────────────────────────────────────────────────
+
+function scrollFinal() {
+    const c = document.getElementById("mensagens");
+    c.scrollTop = c.scrollHeight;
+}
+
+function limparMensagens() {
+    document.getElementById("mensagens").innerHTML = "";
+}
+
+function habilitarInput(placeholder) {
+    const campo = document.getElementById("campo-mensagem");
+    const btn   = document.querySelector(".btn-enviar");
+    campo.disabled     = false;
+    btn.disabled       = false;
+    campo.placeholder  = placeholder;
+    campo.focus();
+}
+
+function desabilitarInput() {
+    const campo = document.getElementById("campo-mensagem");
+    const btn   = document.querySelector(".btn-enviar");
+    campo.disabled    = true;
+    btn.disabled      = true;
+    campo.placeholder = "Selecione uma conversa...";
+}
+
+function criarBolha(conteudo, tipo, remetente) {
+    const wrapper = document.createElement("div");
+    wrapper.className = `msg ${tipo}`;
+
+    if (remetente) {
+        const r = document.createElement("div");
+        r.className = "msg-remetente";
+        r.textContent = remetente;
+        wrapper.appendChild(r);
+    }
+
+    const bubble = document.createElement("div");
+    bubble.className = "msg-bubble";
+    bubble.textContent = conteudo;
+    wrapper.appendChild(bubble);
+    return wrapper;
+}
+
+function adicionarBolha(conteudo, tipo, remetente) {
+    document.getElementById("mensagens").appendChild(criarBolha(conteudo, tipo, remetente));
+    scrollFinal();
+}
+
+function pararPolling() {
+    if (pollingAtivo) {
+        clearInterval(pollingAtivo);
+        pollingAtivo = null;
+    }
+}
+
+function marcarAtivoSidebar(tipo, identificador) {
+    // remove ativo de todos
+    document.querySelectorAll(".item-nav").forEach(el => el.classList.remove("ativo"));
+
+    // marca o item correto
+    const seletor = tipo === "amigo"
+        ? `[data-amigo="${identificador}"]`
+        : `[data-grupo-id="${identificador}"]`;
+
+    const el = document.querySelector(seletor);
+    if (el) el.classList.add("ativo");
+}
+
+// ── Chat privado ──────────────────────────────────────────────────────────────
+
+async function abrirChatAmigo(nome) {
+    pararPolling();
+
+    modoAtivo  = "amigo";
+    amigoAtivo = nome;
+    grupoAtivo = null;
+    totalMsgs  = 0;
+
+    document.getElementById("chat-header").innerHTML =
+        `🔒 Chat privado com <strong>${nome}</strong>`;
+
+    limparMensagens();
+    marcarAtivoSidebar("amigo", nome);
+    habilitarInput(`Mensagem para ${nome}...`);
+
+    // carrega histórico completo e inicia polling de novas mensagens
+    await carregarNovasMensagensPrivadas(nome);
+
+    pollingAtivo = setInterval(() => {
+        if (amigoAtivo !== nome) { pararPolling(); return; }
+        carregarNovasMensagensPrivadas(nome);
+    }, 1000);
+}
+
+async function carregarNovasMensagensPrivadas(nome) {
+    try {
+        const res = await fetch(`/historico/${nome}`);
+        if (!res.ok) return;
+
+        const historico = await res.json();
+
+        if (historico.length > totalMsgs) {
+            historico.slice(totalMsgs).forEach(m => {
+                const tipo  = m.remetente === MEU_NOME ? "propria" : "outros";
+                const label = m.remetente === MEU_NOME ? "Você" : m.remetente;
+                adicionarBolha(m.conteudo, tipo, label);
+            });
+            totalMsgs = historico.length;
+        }
+    } catch (e) {
+        console.error("[chat privado]", e);
+    }
+}
+
+// ── Chat de grupo ─────────────────────────────────────────────────────────────
+
+async function abrirChatGrupo(id, nome) {
+    pararPolling();
+
+    modoAtivo  = "grupo";
+    grupoAtivo = { id, nome };
+    amigoAtivo = null;
+    totalMsgs  = 0;
+
+    document.getElementById("chat-header").innerHTML =
+        `👥 <strong>${nome}</strong>
+         <button class="btn-add-membro" onclick="abrirModalAddMembro()">+ Adicionar membro</button>`;
+
+    limparMensagens();
+    marcarAtivoSidebar("grupo", id);
+    habilitarInput(`Mensagem para ${nome}...`);
+
+    // carrega histórico e inicia polling
+    await carregarNovasMensagensGrupo(id);
+
+    pollingAtivo = setInterval(() => {
+        if (!grupoAtivo || grupoAtivo.id !== id) { pararPolling(); return; }
+        carregarNovasMensagensGrupo(id);
+    }, 1000);
+}
+
+async function carregarNovasMensagensGrupo(id) {
+    try {
+        const res = await fetch(`/historico-grupo/${id}`);
+        if (!res.ok) return;
+
+        const historico = await res.json();
+
+        if (historico.length > totalMsgs) {
+            historico.slice(totalMsgs).forEach(m => {
+                const tipo  = m.remetente === MEU_NOME ? "propria" : "outros";
+                const label = m.remetente === MEU_NOME ? "Você" : m.remetente;
+                adicionarBolha(m.conteudo, tipo, label);
+            });
+            totalMsgs = historico.length;
+        }
+    } catch (e) {
+        console.error("[chat grupo]", e);
+    }
+}
+
+// ── Envio ─────────────────────────────────────────────────────────────────────
+
+async function enviar() {
+    const campo = document.getElementById("campo-mensagem");
+    const texto = campo.value.trim();
+    if (!texto || !modoAtivo) return;
+    campo.value = "";
+
+    // monta o comando correto dependendo do modo ativo
+    let mensagem;
+    if (modoAtivo === "amigo") {
+        mensagem = `/msg ${amigoAtivo} ${texto}`;
+    } else if (modoAtivo === "grupo") {
+        mensagem = `/msg-grupo ${grupoAtivo.id} ${texto}`;
+    } else {
+        return;
+    }
+
+    try {
+        const res = await fetch("/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mensagem })
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+            adicionarBolha(data.erro || "Erro ao enviar.", "info", "");
+        }
+    } catch (e) {
+        adicionarBolha("Erro de conexão.", "info", "");
+    }
+}
+
+// ── Lista de amigos ───────────────────────────────────────────────────────────
+
+async function atualizarAmigos() {
+    try {
+        const res = await fetch("/amigos");
+        if (!res.ok) return;
+
+        const amigos = await res.json();
+        const lista  = document.getElementById("amigos-lista");
+        lista.innerHTML = "";
+
+        if (amigos.length === 0) {
+            lista.innerHTML = '<span class="sem-itens">Nenhum amigo ainda.</span>';
+            return;
+        }
+
+        amigos.forEach(a => {
+            const div = document.createElement("div");
+            div.className = "item-nav" + (amigoAtivo === a.nome ? " ativo" : "");
+            div.dataset.amigo = a.nome;
+            div.onclick = () => abrirChatAmigo(a.nome);
+            div.innerHTML = `
+                <div class="amigo-dot ${a.online ? 'online' : 'offline'}"></div>
+                <span class="item-nome">${a.nome}</span>
+            `;
+            lista.appendChild(div);
+        });
+    } catch (e) {
+        console.error("[amigos]", e);
+    }
+}
+
+// ── Lista de grupos ───────────────────────────────────────────────────────────
+
+async function atualizarGrupos() {
+    try {
+        const res = await fetch("/grupos");
+        if (!res.ok) return;
+
+        const grupos = await res.json();
+        const lista  = document.getElementById("grupos-lista");
+        lista.innerHTML = "";
+
+        if (grupos.length === 0) {
+            lista.innerHTML = '<span class="sem-itens">Nenhum grupo ainda.</span>';
+            return;
+        }
+
+        grupos.forEach(g => {
+            const div = document.createElement("div");
+            div.className = "item-nav" + (grupoAtivo && grupoAtivo.id === g.id ? " ativo" : "");
+            div.dataset.grupoId = g.id;
+            div.onclick = () => abrirChatGrupo(g.id, g.nome);
+            div.innerHTML = `
+                <span class="grupo-icone">👥</span>
+                <span class="item-nome">${g.nome}</span>
+            `;
+            lista.appendChild(div);
+        });
+    } catch (e) {
+        console.error("[grupos]", e);
+    }
+}
+
+// atualiza sidebar a cada 3 segundos
+atualizarAmigos();
+atualizarGrupos();
+setInterval(atualizarAmigos, 3000);
+setInterval(atualizarGrupos, 3000);
+
+// ── Modais ────────────────────────────────────────────────────────────────────
+
+function abrirModal(id) {
+    document.getElementById(id).classList.add("visivel");
+}
+
+function fecharModal(id) {
+    document.getElementById(id).classList.remove("visivel");
+}
+
+function fecharModalSeClicarFora(e, id) {
+    if (e.target.id === id) fecharModal(id);
+}
+
+// -- Modal adicionar amigo --
+
+function abrirModalAmigo() {
+    document.getElementById("input-amigo").value = "";
+    document.getElementById("erro-amigo").textContent = "";
+    abrirModal("modal-amigo");
+    setTimeout(() => document.getElementById("input-amigo").focus(), 50);
+}
+
+async function confirmarAdicionarAmigo() {
+    const nome = document.getElementById("input-amigo").value.trim();
+    const erro = document.getElementById("erro-amigo");
+    erro.textContent = "";
+
+    if (!nome) { erro.textContent = "Digite um nome."; return; }
+
+    try {
+        const res  = await fetch("/amigos/adicionar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            fecharModal("modal-amigo");
+            atualizarAmigos();
+        } else {
+            erro.textContent = data.erro || "Erro ao adicionar.";
+        }
+    } catch (e) {
+        erro.textContent = "Erro de conexão.";
+    }
+}
+
+// -- Modal criar grupo --
+
+async function abrirModalCriarGrupo() {
+    document.getElementById("input-nome-grupo").value = "";
+    document.getElementById("erro-criar-grupo").textContent = "";
+
+    // popula lista de amigos com checkboxes
+    const listaEl = document.getElementById("amigos-check-lista");
+    listaEl.innerHTML = '<span class="sem-itens">Carregando...</span>';
+
+    abrirModal("modal-criar-grupo");
+    setTimeout(() => document.getElementById("input-nome-grupo").focus(), 50);
+
+    try {
+        const res    = await fetch("/amigos");
+        const amigos = await res.json();
+        listaEl.innerHTML = "";
+
+        if (amigos.length === 0) {
+            listaEl.innerHTML = '<span class="sem-itens">Você não tem amigos ainda.</span>';
+            return;
+        }
+
+        amigos.forEach(a => {
+            const label = document.createElement("label");
+            label.className = "amigo-check-item";
+            label.innerHTML = `
+                <input type="checkbox" value="${a.nome}">
+                <span>${a.nome}</span>
+            `;
+            listaEl.appendChild(label);
+        });
+    } catch (e) {
+        listaEl.innerHTML = '<span class="sem-itens">Erro ao carregar amigos.</span>';
+    }
+}
+
+async function confirmarCriarGrupo() {
+    const nomeGrupo = document.getElementById("input-nome-grupo").value.trim();
+    const erro      = document.getElementById("erro-criar-grupo");
+    erro.textContent = "";
+
+    if (!nomeGrupo) { erro.textContent = "Digite o nome do grupo."; return; }
+
+    // coleta os amigos marcados
+    const checkboxes = document.querySelectorAll("#amigos-check-lista input[type='checkbox']:checked");
+    const membros    = Array.from(checkboxes).map(cb => cb.value);
+
+    try {
+        const res  = await fetch("/grupos/criar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome: nomeGrupo, membros })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            fecharModal("modal-criar-grupo");
+            await atualizarGrupos();
+            // abre o grupo recém-criado automaticamente
+            abrirChatGrupo(data.id_grupo, nomeGrupo);
+        } else {
+            erro.textContent = data.erro || "Erro ao criar grupo.";
+        }
+    } catch (e) {
+        erro.textContent = "Erro de conexão.";
+    }
+}
+
+// -- Modal adicionar membro ao grupo --
+
+function abrirModalAddMembro() {
+    document.getElementById("input-novo-membro").value = "";
+    document.getElementById("erro-add-membro").textContent = "";
+    abrirModal("modal-add-membro");
+    setTimeout(() => document.getElementById("input-novo-membro").focus(), 50);
+}
+
+async function confirmarAdicionarMembro() {
+    if (!grupoAtivo) return;
+
+    const nome = document.getElementById("input-novo-membro").value.trim();
+    const erro = document.getElementById("erro-add-membro");
+    erro.textContent = "";
+
+    if (!nome) { erro.textContent = "Digite um nome."; return; }
+
+    try {
+        const res  = await fetch(`/grupos/${grupoAtivo.id}/adicionar-membro`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+            fecharModal("modal-add-membro");
+            adicionarBolha(`${nome} foi adicionado ao grupo.`, "sistema", "");
+        } else {
+            erro.textContent = data.erro || "Erro ao adicionar membro.";
+        }
+    } catch (e) {
+        erro.textContent = "Erro de conexão.";
+    }
+}
+
+// ── Logout ────────────────────────────────────────────────────────────────────
+
+async function logout() {
+    await fetch("/logout", { method: "POST" });
+    window.location.href = "/login";
+}
+
+</script>
+</body>
+</html>
