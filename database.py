@@ -31,7 +31,7 @@ def inicializar_banco():
             CREATE TABLE IF NOT EXISTS grupos (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome       TEXT NOT NULL UNIQUE,
-                criado_por TEXT NOT NULL,
+                
                 criado_em  DATETIME DEFAULT CURRENT_TIMESTAMP
             );
 
